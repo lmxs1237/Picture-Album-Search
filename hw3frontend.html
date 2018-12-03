@@ -1,0 +1,87 @@
+<html>
+	<head>
+		<title>Photo Album Web Application</title>
+		
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+		
+		<script type="text/javascript" src="js/lib/axios/dist/axios.standalone.js"></script>
+		<script type="text/javascript" src="js/lib/CryptoJS/rollups/hmac-sha256.js"></script>
+		<script type="text/javascript" src="js/lib/CryptoJS/rollups/sha256.js"></script>
+		<script type="text/javascript" src="js/lib/CryptoJS/components/hmac.js"></script>
+		<script type="text/javascript" src="js/lib/CryptoJS/components/enc-base64.js"></script>
+		<script type="text/javascript" src="js/lib/url-template/url-template.js"></script>
+		<script type="text/javascript" src="js/lib/apiGatewayCore/sigV4Client.js"></script>
+		<script type="text/javascript" src="js/lib/apiGatewayCore/apiGatewayClient.js"></script>
+		<script type="text/javascript" src="js/lib/apiGatewayCore/simpleHttpClient.js"></script>
+		<script type="text/javascript" src="js/lib/apiGatewayCore/utils.js"></script>
+		<script type="text/javascript" src="js/apigClient.js"></script>
+		
+		<script type="text/javascript">
+			$(document).ready(function(){
+				$("#search").click(function(){
+					var q = $('#query').val();
+					var apigClient = apigClientFactory.newClient({
+						apiKey: 'your API key'
+					});
+					var params = {
+						//This is where any header, path, or querystring request params go. The key is the parameter named as defined in the API
+						q: q
+					};
+					var body = {
+						//This is where you define the body of the request
+					};
+					var additionalParams = {
+						//If there are any unmodeled query parameters or headers that need to be sent with the request you can add them here
+					};
+
+					apigClient.searchGet(params, body, additionalParams).then(function(result){
+							//This is where you would put a success callback
+							var response_body = JSON.parse(result.data.body);
+							var results = response_body.results;
+							$("ul").empty();
+							results.forEach(function(result) {
+								var img = "<li><img src=\"" + result.url + "\"></li>";
+								$("ul").append(img);
+							});
+					}).catch(function(result){
+							//This is where you would put an error callback
+					});
+				});
+			});
+			$(document).ready(function(){
+				$("#upload").click(function(){
+					var f = document.querySelector('input[type=file]').files[0];
+					if (f){
+						//console.log(f.name);
+						//console.log(f.type);
+						console.log(f.size);
+						//console.log(f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a');
+						if (!f.type.match('image.*')) {
+							alert("Must be image");
+							return false;
+						}
+						var xhr = new XMLHttpRequest(); 
+						xhr.open("PUT", "https://qob0ixojn9.execute-api.us-east-1.amazonaws.com/Prod/upload?name=" + f.name);
+						xhr.setRequestHeader("Content-Type", f.type);
+						xhr.setRequestHeader("x-api-key", "");
+						xhr.onload = function (event) { 
+							$("ul").append("<li>Uploaded: " + xhr.response + "</li>");
+						};
+						xhr.send(f);
+					}
+					else{
+						alert("No file chosen!");
+					}
+				});
+			});
+		</script>
+	</head>
+
+	<body>
+		<input type="text" id="query">
+		<button type="button", id="search">Search</button>
+		<input type="file" id="file" name="files[]" /> <!-- Include multiple to select multiple files -->
+        <button type="button", id="upload">Upload</button>
+		<ul></ul>
+	</body>
+</html>
